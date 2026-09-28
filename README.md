@@ -30,15 +30,19 @@ Web側でtask success、reward、confidence、state changeを再計算しない�
 
 詳細は [AGENTS.md](AGENTS.md) を参照。
 
-## Planned first slice
+## First slice
 
-1. TypeScript + React + Viteの最小アプリを作る。
-2. Service URLとBearer tokenをページメモリで設定する。
-3. `/capabilities` と `/recipes` を読み、schemaを検査する。
-4. `agent-calculate-store-v0` のJobを開始する。
-5. `accepted / running / completed / failed / interrupted` をpollして表示する。
-6. completed Runのtrajectory、state before/after、observation、evaluationを表示する。
-7. API/state mappingのテストを追加する。
+現在のfeature branchには次を実装している。
+
+1. TypeScript + React + Viteの最小アプリ。
+2. Service URLとBearer tokenをページメモリで設定。
+3. `/capabilities` と `/recipes` を読み、schemaと固定recipeを検査。
+4. `agent-calculate-store-v0` のJobを開始。
+5. 二重POSTを止め、前の通信完了後に次のpollを行う。
+6. `accepted / running / completed / failed / interrupted` を区別。
+7. Job ID / Run IDを別表示。
+8. canonical Agent bundleのtrajectory、state before/after、observation、evaluationを表示。
+9. API response schemaとterminal stateのunit test。
 
 自由task入力、remote access、学習UIはこの縦切りが成立してから追加する。
 
@@ -53,9 +57,21 @@ Aster Service:        http://127.0.0.1:8765
 
 Aster ServiceはBearer tokenを要求し、localhost bindを維持する。
 
+## Development
+
+```bash
+npm install
+npm test
+npm run build
+npm run dev
+```
+
+Aster側でPR #18相当のServiceを起動し、表示された接続キーをWebへ入力する。tokenはlocalStorage等へ永続化しない。
+
 ## Status
 
-- repository contract: started
-- Aster Service `agent.run`: PR #18, not merged yet
-- React/Vite application: not scaffolded yet
-- real browser Agent run: not verified yet
+- repository contract: implemented on main
+- Aster Service `agent.run`: PR #18, CI pytest / Pyright passed, not merged yet
+- React/Vite Agent console: implemented on `feat/agent-run-console`
+- aster-web tests/build: not executed in the current remote editing environment
+- real browser → WSL Aster Service → Agent run: not verified yet
