@@ -14,14 +14,24 @@ export class AsterClient {
   readonly token: string;
 
   constructor(baseUrl: string, token: string) {
-    this.baseUrl = baseUrl.replace(/\/+$/, "");
-    this.token = token;
-    if (!this.baseUrl.startsWith("http://127.0.0.1:") && !this.baseUrl.startsWith("http://localhost:")) {
-      throw new Error("Initial aster-web only connects to localhost Aster Service");
+    const url = new URL(baseUrl);
+    const isLocalhost = url.hostname === "127.0.0.1" || url.hostname === "localhost";
+    if (
+      url.protocol !== "http:" ||
+      !isLocalhost ||
+      url.username.length !== 0 ||
+      url.password.length !== 0 ||
+      (url.pathname !== "/" && url.pathname !== "") ||
+      url.search.length !== 0 ||
+      url.hash.length !== 0
+    ) {
+      throw new Error("Initial aster-web only connects to a plain localhost Aster Service origin");
     }
-    if (this.token.length === 0) {
+    if (token.length === 0) {
       throw new Error("Bearer token is required");
     }
+    this.baseUrl = url.origin;
+    this.token = token;
   }
 
   async capabilities(signal?: AbortSignal): Promise<string[]> {
