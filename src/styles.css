@@ -8,7 +8,7 @@
 
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 320px; min-height: 100vh; background: radial-gradient(circle at top, #10284a 0, #07111f 42rem); }
-button, input { font: inherit; }
+button, input, select { font: inherit; }
 button { cursor: pointer; }
 button:disabled { cursor: not-allowed; opacity: .45; }
 
@@ -28,8 +28,8 @@ h2 { margin-bottom: 8px; font-size: 20px; }
 
 .connection-grid { display: grid; grid-template-columns: minmax(260px, 1fr) minmax(260px, 1fr) auto; gap: 12px; align-items: end; }
 label { display: grid; gap: 7px; color: #adc0d8; font-size: 13px; font-weight: 700; }
-input { width: 100%; border: 1px solid #2a4b73; border-radius: 10px; background: #071525; color: #eef6ff; padding: 11px 12px; outline: none; }
-input:focus { border-color: #65a9ff; box-shadow: 0 0 0 3px rgba(101, 169, 255, .12); }
+input, select { width: 100%; border: 1px solid #2a4b73; border-radius: 10px; background: #071525; color: #eef6ff; padding: 11px 12px; outline: none; }
+input:focus, select:focus { border-color: #65a9ff; box-shadow: 0 0 0 3px rgba(101, 169, 255, .12); }
 .primary, .secondary { border-radius: 10px; padding: 11px 16px; font-weight: 800; }
 .primary { border: 1px solid #7db7ff; background: #e6f2ff; color: #07111f; }
 .secondary { border: 1px solid #315d91; background: #102a49; color: #eaf2ff; }
@@ -64,4 +64,20 @@ pre { margin: 0; max-height: 320px; overflow: auto; white-space: pre-wrap; overf
   .hero, .panel-heading.split { flex-direction: column; }
   .connection-grid, .facts, .workspace, .step-grid { grid-template-columns: 1fr; }
   .primary { width: 100%; }
+}
+
+
+.research-panel { padding: 22px; margin-bottom: 18px; }
+.compact-select { min-width: 260px; }
+.research-controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 18px 0; }
+.compare-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.compare-card { min-width: 0; border: 1px solid #1d3b5d; border-radius: 14px; background: #08182a; padding: 15px; }
+.compare-card > h3 { overflow-wrap: anywhere; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 14px; }
+.mini-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
+.research-meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
+.research-facts { margin-top: 4px; }
+
+@media (max-width: 960px) {
+  .research-controls, .compare-grid, .research-meta, .mini-facts { grid-template-columns: 1fr; }
+  .compact-select { width: 100%; min-width: 0; }
 }
