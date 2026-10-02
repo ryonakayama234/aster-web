@@ -64,6 +64,61 @@ export interface JobBundle {
   agent: AgentBundle | null;
 }
 
+export interface ExperimentSummary {
+  experiment_id: string;
+  title: string;
+  schema_version: "aster-experiment-bundle-0";
+  arm_count: number;
+  case_scope: string;
+  learning_curve_status: string;
+}
+
+export interface ExperimentCase {
+  case_id: string;
+  slice: string;
+  target_action: Record<string, JsonValue>;
+  selected_action: Record<string, JsonValue>;
+  correct: boolean;
+  target_candidate_serialization: string;
+  target_tokenization: {
+    token_ids: number[];
+    pieces: string[];
+    length: number;
+    unseen_in_anchor_token_occurrences: number;
+  };
+  candidate_scores: JsonValue;
+  candidate_scores_status: string;
+}
+
+export interface ExperimentArm {
+  arm_id: string;
+  seed: number;
+  training_arm: string;
+  checkpoint_id: string;
+  source_run_id: string;
+  audit_run_id: string;
+  suite_sha256: string;
+  tokenizer_sha256: string;
+  model_update: boolean;
+  new_inference: boolean;
+  test_status: string;
+  summary: Record<string, JsonValue>;
+  learning_curve: JsonValue;
+  learning_curve_status: string;
+  cases: ExperimentCase[];
+}
+
+export interface ExperimentBundle {
+  schema_version: "aster-experiment-bundle-0";
+  experiment_id: string;
+  title: string;
+  evidence: Record<string, JsonValue>;
+  scope: string;
+  limitations: string[];
+  comparison: Record<string, JsonValue>;
+  arms: ExperimentArm[];
+}
+
 const JOB_STATUSES = new Set<JobStatus>([
   "accepted",
   "running",
@@ -157,6 +212,107 @@ export function parseAgentBundle(value: unknown): AgentBundle {
   };
 }
 
+export function parseExperimentIndex(value: unknown): ExperimentSummary[] {
+  const data = object(value, "experiment index");
+  schema(data, "aster-experiment-index-0");
+  if (!Array.isArray(data.experiments)) {
+    throw new Error("experiments must be an array");
+  }
+  return data.experiments.map((item, index) => {
+    const experiment = object(item, `experiments[${index}]`);
+    if (experiment.schema_version !== "aster-experiment-bundle-0") {
+      throw new Error(`unsupported experiment bundle schema at experiments[${index}]`);
+    }
+    return {
+      experiment_id: string(experiment.experiment_id, `experiments[${index}].experiment_id`),
+      title: string(experiment.title, `experiments[${index}].title`),
+      schema_version: "aster-experiment-bundle-0",
+      arm_count: number(experiment.arm_count, `experiments[${index}].arm_count`),
+      case_scope: string(experiment.case_scope, `experiments[${index}].case_scope`),
+      learning_curve_status: string(
+        experiment.learning_curve_status,
+        `experiments[${index}].learning_curve_status`,
+      ),
+    };
+  });
+}
+
+export function parseExperimentBundle(value: unknown): ExperimentBundle {
+  const data = object(value, "experiment bundle");
+  schema(data, "aster-experiment-bundle-0");
+  if (!Array.isArray(data.arms)) {
+    throw new Error("experiment.arms must be an array");
+  }
+  return {
+    schema_version: "aster-experiment-bundle-0",
+    experiment_id: string(data.experiment_id, "experiment.experiment_id"),
+    title: string(data.title, "experiment.title"),
+    evidence: jsonObject(data.evidence, "experiment.evidence"),
+    scope: string(data.scope, "experiment.scope"),
+    limitations: stringArray(data.limitations, "experiment.limitations"),
+    comparison: jsonObject(data.comparison, "experiment.comparison"),
+    arms: data.arms.map(parseExperimentArm),
+  };
+}
+
+function parseExperimentArm(value: unknown, index: number): ExperimentArm {
+  const data = object(value, `experiment.arms[${index}]`);
+  if (!Array.isArray(data.cases)) {
+    throw new Error(`experiment.arms[${index}].cases must be an array`);
+  }
+  return {
+    arm_id: string(data.arm_id, `experiment.arms[${index}].arm_id`),
+    seed: number(data.seed, `experiment.arms[${index}].seed`),
+    training_arm: string(data.training_arm, `experiment.arms[${index}].training_arm`),
+    checkpoint_id: string(data.checkpoint_id, `experiment.arms[${index}].checkpoint_id`),
+    source_run_id: string(data.source_run_id, `experiment.arms[${index}].source_run_id`),
+    audit_run_id: string(data.audit_run_id, `experiment.arms[${index}].audit_run_id`),
+    suite_sha256: string(data.suite_sha256, `experiment.arms[${index}].suite_sha256`),
+    tokenizer_sha256: string(data.tokenizer_sha256, `experiment.arms[${index}].tokenizer_sha256`),
+    model_update: boolean(data.model_update, `experiment.arms[${index}].model_update`),
+    new_inference: boolean(data.new_inference, `experiment.arms[${index}].new_inference`),
+    test_status: string(data.test_status, `experiment.arms[${index}].test_status`),
+    summary: jsonObject(data.summary, `experiment.arms[${index}].summary`),
+    learning_curve: json(data.learning_curve, `experiment.arms[${index}].learning_curve`),
+    learning_curve_status: string(
+      data.learning_curve_status,
+      `experiment.arms[${index}].learning_curve_status`,
+    ),
+    cases: data.cases.map((item, caseIndex) => parseExperimentCase(item, index, caseIndex)),
+  };
+}
+
+function parseExperimentCase(value: unknown, armIndex: number, caseIndex: number): ExperimentCase {
+  const label = `experiment.arms[${armIndex}].cases[${caseIndex}]`;
+  const data = object(value, label);
+  const tokenization = object(data.target_tokenization, `${label}.target_tokenization`);
+  return {
+    case_id: string(data.case_id, `${label}.case_id`),
+    slice: string(data.slice, `${label}.slice`),
+    target_action: jsonObject(data.target_action, `${label}.target_action`),
+    selected_action: jsonObject(data.selected_action, `${label}.selected_action`),
+    correct: boolean(data.correct, `${label}.correct`),
+    target_candidate_serialization: string(
+      data.target_candidate_serialization,
+      `${label}.target_candidate_serialization`,
+    ),
+    target_tokenization: {
+      token_ids: numberArray(tokenization.token_ids, `${label}.target_tokenization.token_ids`),
+      pieces: stringArray(tokenization.pieces, `${label}.target_tokenization.pieces`),
+      length: number(tokenization.length, `${label}.target_tokenization.length`),
+      unseen_in_anchor_token_occurrences: number(
+        tokenization.unseen_in_anchor_token_occurrences,
+        `${label}.target_tokenization.unseen_in_anchor_token_occurrences`,
+      ),
+    },
+    candidate_scores: json(data.candidate_scores, `${label}.candidate_scores`),
+    candidate_scores_status: string(
+      data.candidate_scores_status,
+      `${label}.candidate_scores_status`,
+    ),
+  };
+}
+
 export function isTerminal(status: JobStatus): boolean {
   return status === "completed" || status === "failed" || status === "interrupted";
 }
@@ -226,6 +382,13 @@ function boolean(value: unknown, label: string): boolean {
     throw new Error(`${label} must be a boolean`);
   }
   return value;
+}
+
+function numberArray(value: unknown, label: string): number[] {
+  if (!Array.isArray(value) || !value.every((item) => typeof item === "number" && Number.isFinite(item))) {
+    throw new Error(`${label} must be a finite number array`);
+  }
+  return [...value];
 }
 
 function stringArray(value: unknown, label: string): string[] {
