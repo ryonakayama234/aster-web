@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { isTerminal, parseJobBundle, parseRecipes } from "./contracts";
+import { isTerminal, parseExperimentBundle, parseExperimentIndex, parseJobBundle, parseRecipes } from "./contracts";
 
 describe("service contract parsing", () => {
   it("keeps Job and Run identities distinct and parses Agent evidence", () => {
@@ -68,4 +68,70 @@ describe("service contract parsing", () => {
     expect(isTerminal("failed")).toBe(true);
     expect(isTerminal("interrupted")).toBe(true);
   });
+  it("parses saved research evidence without inventing missing scores", () => {
+    const index = parseExperimentIndex({
+      schema_version: "aster-experiment-index-0",
+      experiments: [
+        {
+          experiment_id: "decision-failure-audit-v0",
+          title: "Decision failure audit v0",
+          schema_version: "aster-experiment-bundle-0",
+          arm_count: 2,
+          case_scope: "phase-zero shared tokenization cases",
+          learning_curve_status: "unavailable_from_committed_evidence",
+        },
+      ],
+    });
+    expect(index[0].arm_count).toBe(2);
+
+    const arm = {
+      arm_id: "seed-42--eight-fixed",
+      seed: 42,
+      training_arm: "eight-fixed",
+      checkpoint_id: "decision_fit:abc",
+      source_run_id: "a".repeat(32),
+      audit_run_id: "b".repeat(32),
+      suite_sha256: "c".repeat(64),
+      tokenizer_sha256: "d".repeat(64),
+      model_update: false,
+      new_inference: false,
+      test_status: "sealed",
+      summary: { correct_by_slice: { key_shift: 1 } },
+      learning_curve: null,
+      learning_curve_status: "unavailable_from_committed_evidence",
+      cases: [
+        {
+          case_id: "subtract/numbers/phase-0/delay-0",
+          slice: "numeric_shift",
+          target_action: { kind: "tool", name: "calculator", arguments: {} },
+          selected_action: { kind: "tool", name: "memory.get", arguments: {} },
+          correct: false,
+          target_candidate_serialization: "{...}",
+          target_tokenization: {
+            token_ids: [512, 453, 513],
+            pieces: ["<bos>", "...", "<eos>"],
+            length: 3,
+            unseen_in_anchor_token_occurrences: 1,
+          },
+          candidate_scores: null,
+          candidate_scores_status: "unavailable_from_committed_evidence",
+        },
+      ],
+    };
+    const bundle = parseExperimentBundle({
+      schema_version: "aster-experiment-bundle-0",
+      experiment_id: "decision-failure-audit-v0",
+      title: "Decision failure audit v0",
+      evidence: { source_sha256: "e".repeat(64) },
+      scope: "saved evidence",
+      limitations: ["scores unavailable"],
+      comparison: { case_join: "case_id" },
+      arms: [arm, { ...arm, arm_id: "seed-42--eight-shuffle", training_arm: "eight-shuffle" }],
+    });
+
+    expect(bundle.arms[0].cases[0].correct).toBe(false);
+    expect(bundle.arms[0].cases[0].candidate_scores).toBeNull();
+    expect(bundle.arms[0].cases[0].target_tokenization.token_ids).toEqual([512, 453, 513]);
+  });
+
 });

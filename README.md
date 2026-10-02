@@ -18,7 +18,7 @@ Tool → Observation → State → Evaluator
 trajectory / evaluation / Run evidence
 ```
 
-初回recipeはAster PR #18で追加中の `agent-calculate-store-v0`。固定された `40 + 2 → total` の経路を使い、calculator、memory.put、memory.get、stopの違いをstep単位で表示する。
+初回Agent recipeはAster mainへmerge済みの `agent-calculate-store-v0`。固定された `40 + 2 → total` の経路を使い、calculator、memory.put、memory.get、stopの違いをstep単位で表示する。
 
 Aster PR: https://github.com/ryonakayama234/Aster/pull/18
 
@@ -68,10 +68,31 @@ npm run dev
 
 Aster側でPR #18相当のServiceを起動し、表示された接続キーをWebへ入力する。tokenはlocalStorage等へ永続化しない。
 
+## Research Observatory
+
+Aster #29 / aster-web #2 の最小vertical sliceとして、保存済みDecision研究をread-onlyで比較する画面を追加中です。
+
+```text
+Browser
+  ↓ GET /experiments
+Aster Service
+  ↓ versioned public projection
+committed research evidence
+  ↓
+Experiment → arm/seed → shared case
+  ↓
+target / selected Action / persisted correctness / target tokenization
+```
+
+初版は `decision-failure-audit-v0`。candidate scoreやlearning curveがcommit済みreportに無い場合は
+`unavailable_from_committed_evidence` と表示し、Webで再計算しません。
+この画面はsaved modelの新規実行ではなく、既存研究証拠を調べる観測系です。
+
 ## Status
 
 - repository contract: implemented on main
-- Aster Service `agent.run`: PR #18, CI pytest / Pyright passed, not merged yet
-- React/Vite Agent console: implemented on `feat/agent-run-console`
-- aster-web tests/build: not executed in the current remote editing environment
-- real browser → WSL Aster Service → Agent run: not verified yet
+- Aster Service fixed `agent.run`: PR #18 merged to Aster main
+- React/Vite fixed Agent console: merged to aster-web main via PR #1
+- Research Observatory: branch `feat/research-observatory-v0`, depends on Aster PR #47
+- aster-web tests/build: this branch should run `npm test && npm run build` on the user/CI environment; remote GitHub editing itself does not execute npm
+- real browser → WSL Aster Service → Research Observatory: not verified yet

@@ -1,8 +1,12 @@
 import {
   parseAcceptedJob,
   parseCapabilities,
+  parseExperimentBundle,
+  parseExperimentIndex,
   parseJobBundle,
   parseRecipes,
+  type ExperimentBundle,
+  type ExperimentSummary,
   type JobBundle,
   type Recipe,
 } from "./contracts";
@@ -40,6 +44,19 @@ export class AsterClient {
 
   async recipes(signal?: AbortSignal): Promise<Recipe[]> {
     return parseRecipes(await this.request("/recipes", { signal }));
+  }
+
+  async experiments(signal?: AbortSignal): Promise<ExperimentSummary[]> {
+    return parseExperimentIndex(await this.request("/experiments", { signal }));
+  }
+
+  async experiment(experimentId: string, signal?: AbortSignal): Promise<ExperimentBundle> {
+    if (!/^[a-z0-9][a-z0-9-]*$/.test(experimentId)) {
+      throw new Error("Invalid experiment ID");
+    }
+    return parseExperimentBundle(
+      await this.request(`/experiments/${experimentId}`, { signal }),
+    );
   }
 
   async startAgent(signal?: AbortSignal): Promise<string> {

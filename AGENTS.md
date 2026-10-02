@@ -72,3 +72,16 @@ Replayや比較は、最初の実経路が成立した後に追加する。
 - model promotion
 - remote access / Cloudflare Tunnel
 - corpus / tokenizer / pretrain workbenchの置換
+
+
+## Research Observatory v0（2026-10-02）
+
+固定Agent Runの次の観測Gateとして、Asterの保存済みDecision研究をread-onlyで比較する。
+Aster #29 / aster-web #2、Aster PR #47が対応。
+
+- `research.observe` capabilityと `aster-experiment-bundle-0` を境界で検査する。
+- Experiment → 2 arm → shared caseを選び、Asterが返したtarget/selected Action、persist済み正誤、target candidate tokenizationを表示する。
+- UIはcandidate score、learning curve、accuracy等を欠損から再構成しない。未提供なら未取得とする。
+- target tokenizationを「全candidateの入力」と誤表示しない。
+- arm比較のcase対応はcase IDで行う。token IDをTokenizer横断で意味対応させない。
+- 初版は保存再生だけ。learned modelの新規実行、Intervention Learning、promotionは別Gate。
